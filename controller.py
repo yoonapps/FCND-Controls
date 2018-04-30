@@ -118,9 +118,9 @@ class NonlinearController(object):
 
         acceleration = p_term + d_term + acceleration_ff
 
-        return acceleration
+        # return acceleration
 
-        # return np.array([0.0, 0.0])
+        return np.array([0.0, 0.0])
     
     def altitude_control(self, altitude_cmd, vertical_velocity_cmd, altitude, vertical_velocity, attitude, acceleration_ff=0.0):
         """Generate vertical acceleration (thrust) command
@@ -162,16 +162,17 @@ class NonlinearController(object):
         if thrust_cmd <= 0.0:
             return np.array([0.0, 0.0])
 
-        c_d = thrust_cmd/DRONE_MASS_KG
+        thrust_acc = thrust_cmd / DRONE_MASS_KG
 
-        target_R13 = acceleration_cmd[0] / c_d
-        target_R23 = acceleration_cmd[1] / c_d
+        R13_cmd = acceleration_cmd[0] / thrust_acc
+        R23_cmd = acceleration_cmd[1] / thrust_acc
 
         R = euler2RM(attitude[0], attitude[1], attitude[2])
-        p_cmd = (1 / R[2, 2]) * (-R[1, 0] * self.k_p_roll * (R[0, 2] - target_R13) + R[0, 0] * self.k_p_pitch * (R[1, 2] - target_R23))
-        q_cmd = (1 / R[2, 2]) * (-R[1, 1] * self.k_p_roll * (R[0, 2] - target_R13) + R[0, 1] * self.k_p_pitch * (R[1, 2] - target_R23))
+        
+        rot = np.array([[-R[1, 0], R[0, 0]], [-R[1, 1], R[0, 1]]])
+        control = np.array([self.k_p_roll * (R[0, 2] - R13_cmd), self.k_p_pitch * (R[1, 2] - R23_cmd)])
 
-        return np.array([p_cmd, q_cmd])
+        return np.matmul(rot, control) / R[2, 2]
     
     def body_rate_control(self, body_rate_cmd, body_rate):
         """ Generate the roll, pitch, yaw moment commands in the body frame
@@ -188,9 +189,9 @@ class NonlinearController(object):
 
         moment = MOI * u_bar
 
-        return moment
+        # return moment
 
-        # return np.array([0.0, 0.0, 0.0])
+        return np.array([0.0, 0.0, 0.0])
     
     def yaw_control(self, yaw_cmd, yaw):
         """ Generate the target yawrate
