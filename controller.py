@@ -8,6 +8,7 @@ components:
 """
 import numpy as np
 from frame_utils import euler2RM
+import math
 
 DRONE_MASS_KG = 0.5
 GRAVITY = -9.81
@@ -17,9 +18,38 @@ MAX_TORQUE = 1.0
 
 class NonlinearController(object):
 
-    def __init__(self):
+    def __init__(self,
+                z_k_p=1.0,
+                z_k_d=1.0,
+                x_k_p=1.0,
+                x_k_d=1.0,
+                y_k_p=1.0,
+                y_k_d=1.0,
+                k_p_roll=1.0,
+                k_p_pitch=1.0,
+                k_p_yaw=1.0,
+                k_p_p=1.0,
+                k_p_q=1.0,
+                k_p_r=1.0):
         """Initialize the controller object and control gains"""
-        return    
+        self.z_k_p = z_k_p
+        self.z_k_d = z_k_d
+        self.x_k_p = x_k_p
+        self.x_k_d = x_k_d
+        self.y_k_p = y_k_p
+        self.y_k_d = y_k_d
+        self.k_p_roll = k_p_roll
+        self.k_p_pitch = k_p_pitch
+        self.k_p_yaw = k_p_yaw
+        self.k_p_p = k_p_p
+        self.k_p_q = k_p_q
+        self.k_p_r = k_p_r
+        
+        print('x: delta = %5.3f'%(x_k_d/2/math.sqrt(x_k_p)), ' omega_n = %5.3f'%(math.sqrt(x_k_p)))
+        print('y: delta = %5.3f'%(y_k_d/2/math.sqrt(y_k_p)), ' omega_n = %5.3f'%(math.sqrt(y_k_p)))
+        print('z: delta = %5.3f'%(z_k_d/2/math.sqrt(z_k_p)), ' omega_n = %5.3f'%(math.sqrt(z_k_p)))
+        
+        self.g = GRAVITY
 
     def trajectory_control(self, position_trajectory, yaw_trajectory, time_trajectory, current_time):
         """Generate a commanded position, velocity and yaw based on the trajectory
@@ -81,7 +111,16 @@ class NonlinearController(object):
             
         Returns: desired vehicle 2D acceleration in the local frame [north, east]
         """
-        return np.array([0.0, 0.0])
+
+        p_term = self.x_k_p * (local_position_cmd - local_position)
+        
+        d_term = self.x_k_d * (local_velocity_cmd - local_velocity)
+
+        acceleration = p_term + d_term + acceleration_ff
+
+        return acceleration
+
+        # return np.array([0.0, 0.0])
     
     def altitude_control(self, altitude_cmd, vertical_velocity_cmd, altitude, vertical_velocity, attitude, acceleration_ff=0.0):
         """Generate vertical acceleration (thrust) command
@@ -96,7 +135,18 @@ class NonlinearController(object):
             
         Returns: thrust command for the vehicle (+up)
         """
-        return 0.0
+
+        p_term = self.z_k_p * (altitude_cmd - altitude) + vertical_velocity_cmd
+
+        d_term = self.z_k_d * (vertical_velocity_cmd - vertical_velocity)
+
+        acc = p_term + d_term + acceleration_ff
+
+        b_z = np.cos(attitude[0]) * np.cos(attitude[1])
+
+        thrust = DRONE_MASS_KG * acc / b_z
+
+        return thrust
         
     
     def roll_pitch_controller(self, acceleration_cmd, attitude, thrust_cmd):

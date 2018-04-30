@@ -138,14 +138,6 @@ class ControlsFlyer(UnityDrone):
                 if ~self.armed & ~self.guided:
                     self.manual_transition()
 
-    def calculate_box(self):
-        print("Setting Home")
-        local_waypoints = [[10.0, 0.0, -3.0],
-                           [10.0, 10.0, -3.0],
-                           [0.0, 10.0, -3.0],
-                           [0.0, 0.0, -3.0]]
-        return local_waypoints
-
     def arming_transition(self):
         print("arming transition")
         self.take_control()
@@ -165,9 +157,10 @@ class ControlsFlyer(UnityDrone):
         self.flight_state = States.TAKEOFF
 
     def waypoint_transition(self):
-        #print("waypoint transition")
+        print("waypoint transition")
         self.waypoint_number = self.waypoint_number + 1
         self.target_position = self.all_waypoints.pop(0)
+        # self.target_position = np.array([0.0, 0.0, -3.0])
         self.flight_state = States.WAYPOINT
 
     def landing_transition(self):
