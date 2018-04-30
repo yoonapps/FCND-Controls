@@ -181,5 +181,9 @@ class NonlinearController(object):
         
         Returns: target yawrate in radians/sec
         """
-        return 0.0
+
+        err = yaw_cmd - yaw
+        cmd = self.k_p_yaw * err
+
+        return cmd
     
