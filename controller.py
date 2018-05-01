@@ -137,7 +137,6 @@ class NonlinearController(object):
         """
 
         p_term = self.z_k_p * (altitude_cmd - altitude) + vertical_velocity_cmd
-
         d_term = self.z_k_d * (vertical_velocity_cmd - vertical_velocity)
 
         acc = p_term + d_term + acceleration_ff
@@ -146,7 +145,11 @@ class NonlinearController(object):
 
         thrust = DRONE_MASS_KG * acc / b_z
 
+        thrust = min(thrust, MAX_THRUST) if thrust > 0.0 else 0.0
+
         return thrust
+
+        # return 0.0
         
     
     def roll_pitch_controller(self, acceleration_cmd, attitude, thrust_cmd):
@@ -172,7 +175,9 @@ class NonlinearController(object):
         rot = np.array([[-R[1, 0], R[0, 0]], [-R[1, 1], R[0, 1]]])
         control = np.array([self.k_p_roll * (R[0, 2] - R13_cmd), self.k_p_pitch * (R[1, 2] - R23_cmd)])
 
-        return np.matmul(rot, control) / R[2, 2]
+        # return np.matmul(rot, control) / R[2, 2]
+
+        return np.array([0.0, 0.0])
     
     def body_rate_control(self, body_rate_cmd, body_rate):
         """ Generate the roll, pitch, yaw moment commands in the body frame
@@ -203,8 +208,10 @@ class NonlinearController(object):
         Returns: target yawrate in radians/sec
         """
 
-        err = yaw_cmd - yaw
+        err = (yaw_cmd % 2.0*np.pi) - yaw
         cmd = self.k_p_yaw * err
 
-        return cmd
+        # return cmd
+
+        return 0.0
     
