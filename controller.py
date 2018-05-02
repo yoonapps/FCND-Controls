@@ -28,7 +28,7 @@ class NonlinearController(object):
                 y_k_d=1.0,
                 k_p_roll=1.0,
                 k_p_pitch=1.0,
-                k_p_yaw=0.5,
+                k_p_yaw=1.0,
                 k_p_p=1.0,
                 k_p_q=1.0,
                 k_p_r=1.0):
@@ -174,9 +174,9 @@ class NonlinearController(object):
         rot = np.array([[-R[1, 0], R[0, 0]], [-R[1, 1], R[0, 1]]])
         control = np.array([self.k_p_roll * (R[0, 2] - R13_cmd), self.k_p_pitch * (R[1, 2] - R23_cmd)])
 
-        return np.matmul(rot, control) / R[2, 2]
+        # return np.matmul(rot, control) / R[2, 2]
 
-        # return np.array([0.0, 0.0])
+        return np.array([0.0, 0.0])
     
     def body_rate_control(self, body_rate_cmd, body_rate):
         """ Generate the roll, pitch, yaw moment commands in the body frame
